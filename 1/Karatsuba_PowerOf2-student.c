@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <math.h>
 
-/* Karatsuba algorithm where n is a power of two. 
+/* Karatsuba algorithm where n is a power of two.
  * Based on a original code written by François Boulier. */
 
 void allocate_poly(double **A, int n)
@@ -13,7 +13,7 @@ void allocate_poly(double **A, int n)
 
 void free_poly(double *A)
 {
-  free(A); 
+  free(A);
 }
 
 void init_poly(double *A, int n)
@@ -45,43 +45,51 @@ bool compare_polys(double *A, double *B, int n)
 {
   for (int i = 0; i < n; i++)
     {
-      if (A[i] != B[i]) return false; 
+      if (A[i] != B[i]) return false;
     }
-  return true; 
+  return true;
 }
-void add_poly (double *R, double *A, double *B, int n)
+void add_poly (double *R, double *A, double *B, int n, long *count)
 {
     for ( int i =0 ; i<n ; i++) {
         R[i]= A[i] + B[i];
+        (*count)++;
         }
 
 }
 
-void sub_poly (double *R, double *A, double *B, int n)
+void sub_poly (double *R, double *A, double *B, int n,  long *count)
 {
      for ( int i =0 ; i<n ; i++) {
             R[i]= A[i] - B[i];
+            (*count)++;
             }
 
 }
 
-void mul_poly (double *R, double *A, double *B, int n)
+void mul_poly (double *R, double *A, double *B, int n, long *count)
 {
-     int i, j;
+     int i, j,comp;
 
 
         for (i = 0; i < 2 * n - 1; i++)
             R[i] = 0.0;
 
 
-        for (i = 0; i < n; i++)
-            for (j = 0; j < n; j++)
+
+        for (i = 0; i < n; i++){
+            for (j = 0; j < n; j++){
                 R[i + j] += A[i] * B[j];
+                (*count)++;
+                }
+
 
 }
+}
 
-void Karatsuba (double *R, double *A, double *B, int n)
+void Karatsuba (double *R, double *A, double *B, int n, long *count)
 {
+  int comp;
   double *A0, *A1, *B0, *B1, *R0, *R2;
   int p = n / 2;
   double R1[n], A01[n], B01[n], R02[n], R3[n];
@@ -89,6 +97,7 @@ void Karatsuba (double *R, double *A, double *B, int n)
   int i;
     if (n == 1) {
             R[0] = A[0] * B[0];
+            (*count)++;
             return;
         }
   else
@@ -107,27 +116,31 @@ void Karatsuba (double *R, double *A, double *B, int n)
 
       /* ... todo ... */
     }
-Karatsuba(R0,A0,B0,p);
-Karatsuba(R2,A1,B1,p);
-add_poly (A01, A0, A1,p);
-add_poly (B01, B0, B1,p);
-add_poly (R02, R0, R2,n-1);
-Karatsuba(R3,A01,B01,p);
-sub_poly (R1, R3, R02,n-1);
-for (i = 0; i < n-1; i++)
+Karatsuba(R0,A0,B0,p,count);
+Karatsuba(R2,A1,B1,p,count);
+add_poly (A01, A0, A1,p,count);
+add_poly (B01, B0, B1,p,count);
+add_poly (R02, R0, R2,n-1,count);
+Karatsuba(R3,A01,B01,p,count);
+sub_poly (R1, R3, R02,n-1,count);
+for (i = 0; i < n-1; i++){
         R[i + p] += R1[i];
+        (*count)++;
 
 
+}
 }
 
 
 int main (int argc, char **argv)
 {
-  double *A = NULL; 
-  double *B = NULL; 
+  double *A = NULL;
+  double *B = NULL;
   double *R_naive = NULL;
   double *R_K = NULL;
-  
+  long countnaive =0;
+  long count=0;
+
   int n = 8;
   if (argc > 1) { n = atoi(argv[1]); }
 
@@ -144,11 +157,11 @@ int main (int argc, char **argv)
   printf("\n");
   print_poly ("B = ", B, n);
   printf("\n");
-  
-  mul_poly (R_naive, A, B, n);
+
+  mul_poly (R_naive, A, B, n, &countnaive);
   print_poly ("Naive: A * B = ", R_naive, 2*n-1);
   printf("\n");
-  Karatsuba (R_K, A, B, n);
+  Karatsuba (R_K, A, B, n, &count);
   print_poly ("Karatsuba: A * B = ", R_K, 2*n-1);
   printf("\n");
 
@@ -161,4 +174,5 @@ int main (int argc, char **argv)
   free_poly(B);
   free_poly(R_naive);
   free_poly(R_K);
+printf("nombre d'operation arithmetique pour la multiplication naive est %ld et nombre pour l'algo de karatsuba est %ld\n", countnaive, count);
 }
