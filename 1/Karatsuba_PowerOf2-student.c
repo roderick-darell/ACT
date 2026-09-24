@@ -134,45 +134,51 @@ for (i = 0; i < n-1; i++){
 
 int main (int argc, char **argv)
 {
-  double *A = NULL;
-  double *B = NULL;
-  double *R_naive = NULL;
-  double *R_K = NULL;
-  long countnaive =0;
-  long count=0;
 
-  int n = 8;
-  if (argc > 1) { n = atoi(argv[1]); }
+  int n_max_pow = 10;  // teste n = 2^1 jusqu'à 2^10 = 1024, ajuste selon tes besoins
+  if (argc > 1) n_max_pow = atoi(argv[1]);
 
-  srand48 ((long) 42);
+  FILE *f = fopen("resultats.csv", "w");
+  fprintf(f, "n,naive,karatsuba\n");
 
-  allocate_poly (&A, n);
-  allocate_poly (&B, n);
-  allocate_poly (&R_naive, 2*n-1);
-  allocate_poly (&R_K, 2*n-1);
+  for (int k = 1; k <= n_max_pow; k++)
+    {
+      int n = 1 << k;  //
+      double *A = NULL;
+      double *B = NULL;
+      double *R_naive = NULL;
+      double *R_K = NULL;
+      long count_naive =0;
+      long count=0;
 
-  init_poly(A, n);
-  init_poly(B, n);
-  print_poly ("A = ", A, n);
-  printf("\n");
-  print_poly ("B = ", B, n);
-  printf("\n");
 
-  mul_poly (R_naive, A, B, n, &countnaive);
-  print_poly ("Naive: A * B = ", R_naive, 2*n-1);
-  printf("\n");
-  Karatsuba (R_K, A, B, n, &count);
-  print_poly ("Karatsuba: A * B = ", R_K, 2*n-1);
-  printf("\n");
+      if (argc > 1) { n = atoi(argv[1]); }
 
-  if (compare_polys(R_naive, R_K, 2*n-1))
-    printf("=> The two results match!\n");
-  else
-    printf("=> The two results do NOT match!\n");
+      srand48 ((long) 42);
 
-  free_poly(A);
-  free_poly(B);
-  free_poly(R_naive);
-  free_poly(R_K);
-printf("nombre d'operation arithmetique pour la multiplication naive est %ld et nombre pour l'algo de karatsuba est %ld\n", countnaive, count);
+      allocate_poly (&A, n);
+      allocate_poly (&B, n);
+      allocate_poly (&R_naive, 2*n-1);
+      allocate_poly (&R_K, 2*n-1);
+
+      init_poly(A, n);
+      init_poly(B, n);
+      print_poly ("A = ", A, n);
+      printf("\n");
+      print_poly ("B = ", B, n);
+      printf("\n");
+
+      mul_poly (R_naive, A, B, n, &count_naive);
+      Karatsuba (R_K, A, B, n, &count);
+      fprintf(f, "%d,%ld,%ld\n", n, count_naive, count);
+      printf("n=%d : naive=%ld, karatsuba=%ld\n", n, count_naive, count);
+
+
+
+      free_poly(A);
+      free_poly(B);
+      free_poly(R_naive);
+      free_poly(R_K);
+      }
+  fclose(f);
 }
